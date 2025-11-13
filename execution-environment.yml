@@ -1,0 +1,27 @@
+---
+version: 3
+
+images:
+  base_image:
+    name: "quay.io/ansible/ansible-runner:latest"
+
+dependencies:
+  python: requirements.txt
+  galaxy: requirements.yml
+  system: bindep.txt
+
+options:
+  package_manager_path: /usr/bin/apt-get
+
+additional_build_steps:
+
+  prepend_base:
+    - RUN apt-get update && apt-get install -y \
+        python3-dev gcc g++ libffi-dev libssl-dev libaio1 krb5-user \
+        && rm -rf /var/lib/apt/lists/*
+
+  append_final:
+    # IMPORTANT: AAP requires UID 1000 inside the EE
+    - RUN useradd --uid 1000 ansible || true
+    - RUN mkdir -p /runner && chown -R 1000:0 /runner
+    - USER 1000
